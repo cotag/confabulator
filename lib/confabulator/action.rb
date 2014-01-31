@@ -3,7 +3,10 @@ module Confabulator
     class Action
     	
 
-    	
+    	def initialize(video, options)
+            @options = options
+            @movie = movie
+        end
 
 
     #resolution
@@ -15,11 +18,14 @@ module Confabulator
 
 
     	def transcode(thread)
-
-
+            thread.work method(:do_work)
     	end
 
 
+        protected
 
+        def do_work
+
+        end
     end
 end

@@ -4,7 +4,8 @@ module Confabulator
 		
 		W_16_10 = [{
 				width: 1920,
-				height: 1200
+				height: 1200,
+
 			},
 			{
 				width: 1280,
@@ -117,7 +118,9 @@ module Confabulator
 
 			actions = []
 			resolutions.each do |res|
-				action = Action.new
+				FORMATS.each do |format|
+					action = Action.new(video, res.merge(format))
+				end
 			end
 			return actions
 		end
