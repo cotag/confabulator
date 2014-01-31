@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
     gem.email         = ["steve@cotag.me"]
     gem.homepage      = "https://github.com/cotag/confabulator"
     gem.summary       = "Video transcoding"
-    gem.description   = "Opinionated video transcoding"
+    gem.description   = "Opinionated video transcoding for the cloud"
 
     gem.required_ruby_version = '>= 1.9.2'
     gem.require_paths = ["lib"]
