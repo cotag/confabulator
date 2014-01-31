@@ -1,13 +1,14 @@
-#!/usr/bin/env ruby
+
+# Required Gems
 require 'libuv'
 require 'streamio-ffmpeg'
-#supporting files
 
+
+# Project files
+require 'confabulator/version'
 require 'confabulator/configuration'
 require 'confabulator/action'
 
+
 module Confabulator
-
-
-
 end
