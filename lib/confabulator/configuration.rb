@@ -2,7 +2,20 @@
 module Confabulator
 	class Configuration
 		
-		WIDESCREEN = [{
+		W_16_10 = [{
+				width: 1920,
+				height: 1200
+			},
+			{
+				width: 1280,
+				height: 800
+			},
+			{
+				width: 768
+				height: 480
+			}]
+
+		W_16_9 = [{
 				width: 1920,
 				height: 1080
 			},
@@ -11,11 +24,11 @@ module Confabulator
 				height: 720
 			},
 			{
-				width: 480,
-				height: 320
+				width: 854
+				height: 480
 			}]
 
-		STANDARD = [{
+		S_4_3 = [{
 				width: 1440,
 				height: 1080
 			},
@@ -26,13 +39,19 @@ module Confabulator
 			{
 				width: 640,
 				height: 480
-			},
-			{
-				width: 480,
-				height: 320
 			}]
 
+		STR_16_10 = '16:10'.freeze
+		STR_16_9 = '16:9'.freeze
+		STR_4_3 = '4:3'.freeze
+
+
+
 		#NON_STANDARD = []
+		# ratio = width / height
+		# new_h = W_16_10[closest match].height
+		# width = new_h * ratio
+
 
 		FORMATS = [
 			{
@@ -47,64 +66,68 @@ module Confabulator
 			}
 		]
 
-		def initialize
-			@thread = Libuv::Loop.default
-
-			#exists = @thread.work method(:perform_check)
+		def initialize(thread = Libuv::Loop.default)
+			@thread = thread
 		end
 
 
 
 		#use streamio to check the file and raise an error if the file is fucked
+		class InvalidVideo < TypeError; end
 
 		def process_video(filename)
 			video = FFMPEG::Movie.new(filename)
-			raise InvalidVideo if not video.valid?
+			raise InvalidVideo unless video.valid?
 			raise InvalidVideo if video.video_codec.nil?
-			#handle aspect ratio
-			@actions = generate_actions(video)
-			return @actions
+			return generate_actions(video)
 		end
 
 		def generate_actions(video)
-
-
-			# aspect_ratio = video.width / video.height
-			# if aspect_ratio > 1.7
-			# 	#widescreen
-			# else
-			# 	#normal
-			# end
-
-			if video.dar == "16:9" || video.dar == "16:10"
-				resolutions = WIDESCREEN.filter {|x| x[:width] <= video.width && x[:height] <= video.height}
-
+			case video.dar
+			when STR_16_10
+				resolutions = W_16_10.filter {|x| x[:width] <= video.width && x[:height] <= video.height}
+			when STR_16_9
+				resolutions = W_16_9.filter {|x| x[:width] <= video.width && x[:height] <= video.height}
+			when STR_4_3
+				resolutions = W_4_3.filter {|x| x[:width] <= video.width && x[:height] <= video.height}
 			else
-				resolutions = STANDARD.filter {|x| x[:width] <= video.width && x[:height] <= video.height}
+				resolutions = []
+				ratio = video.width / video.height
+				new_height = video.height
+				W_16_10.each do |x|
+					if x[:height] <= new_height
+						new_height = x[:height]
+						width = new_height * ratio
+
+						resolutions << {
+							width: width,
+							height: new_height
+						}
+					end
+				end
 			end
+
+			# naitive
+			unless resolutions.length > 0 && resolutions[0].width == video.width && resolutions[0].height == video.height
+				resolutions << {
+					width: video.width,
+					height: video.height
+				}
+			end
+
+			actions = []
 			resolutions.each do |res|
-				#generate the action for the resolution
+				action = Action.new
 			end
-			return @actions
+			return actions
 		end
 
 
 		def transcode(file)
-			exists = @thread.work do 
+			@thread.work do
 				process_video(file)
 			end
-			exists.catch do |error| 
-				puts "Sorry there was an #{error}"
-			end
-			#result is an array of actions
-			exists.then do |result|
-
-			end
-			
 		end
-
-
-
 	end
 end
 
