@@ -5,7 +5,9 @@ module Confabulator
 
     	def initialize(video, options)
             @options = options
-            @movie = movie
+            @resolution = "#{options[:width]}x#{options[:height]}"
+            @video = video
+            @outputname = "#{video.filename}_#{@resolution}.#{options[:extension]}"
         end
 
 
@@ -18,14 +20,24 @@ module Confabulator
 
 
     	def transcode(thread)
-            thread.work method(:do_work)
+            @thread = thread
+            @worker = @thread.defer
+
+            @worker.resolve(@thread.work(method(:do_work)))
+
+            @worker.promise
     	end
 
 
         protected
 
         def do_work
-
+            @video.transcode(@outputname, @options) do |progress|
+                #method called with progress
+                @thread.schedule do
+                    @worker.notify progress
+                end
+            end
         end
     end
 end
