@@ -9,7 +9,7 @@ describe Confabulator::Configuration do
 			@loop.stop
 			@general_failure << "test timed out"
 		end
-		@timeout.start(5000)
+		@timeout.start(40000)
 	end
 
 	after :each do
@@ -17,25 +17,21 @@ describe Confabulator::Configuration do
 	
 	describe '#generate_actions' do
 		it "should generate transcode action we need to perform" do
+			file_name = File.expand_path("../Video021.mp4", __FILE__)
+
 			@loop.run { |logger|
 				# expecing this to fail
+				config = Confabulator::Configuration.new(@loop)
+				config.check(file_name).then(proc { |res|
+					@actions = res
+					@loop.stop
+				}, proc {
+					@loop.stop
+				})
 			}
 
 			expect(@general_failure).to eq([])
-			#res = @klass.check
-			#expect(res[0]).to eq(true)
-			#expect(res[1]).to eq(true)
-			#expect(res[2]).to eq('hello')
-		end
-
-		it "should error on being handed an invalid video" do
-
-
-		end
-
-		it "should generate the correct number of video outputs for a 1080p input" do
-
-
+			expect(@actions.length).to eq(2)
 		end
 
 	end

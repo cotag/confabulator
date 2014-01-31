@@ -7,7 +7,7 @@ module Confabulator
             @options = options
             @resolution = "#{options[:width]}x#{options[:height]}"
             @video = video
-            @outputname = "#{video.filename}_#{@resolution}.#{options[:extension]}"
+            @outputname = "#{video.path}_#{@resolution}.#{options[:extension]}"
         end
 
 
@@ -23,7 +23,11 @@ module Confabulator
             @thread = thread
             @worker = @thread.defer
 
-            @worker.resolve(@thread.work(method(:do_work)))
+            @thread.work(method(:do_work)).then(proc { |result|
+                @worker.resolve(result)
+            }, proc { |err|
+                @worker.reject(err)
+            })
 
             @worker.promise
     	end
@@ -31,12 +35,11 @@ module Confabulator
 
         protected
 
+
         def do_work
             @video.transcode(@outputname, @options) do |progress|
                 #method called with progress
-                @thread.schedule do
-                    @worker.notify progress
-                end
+                @worker.notify progress
             end
         end
     end
