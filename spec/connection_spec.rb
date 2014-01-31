@@ -27,5 +27,16 @@ describe Confabulator::Configuration do
 			#expect(res[1]).to eq(true)
 			#expect(res[2]).to eq('hello')
 		end
+
+		it "should error on being handed an invalid video" do
+
+
+		end
+
+		it "should generate the correct number of video outputs for a 1080p input" do
+
+
+		end
+
 	end
 end

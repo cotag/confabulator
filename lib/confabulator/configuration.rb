@@ -107,7 +107,7 @@ module Confabulator
 				end
 			end
 
-			# naitive
+			# native
 			unless resolutions.length > 0 && resolutions[0].width == video.width && resolutions[0].height == video.height
 				resolutions << {
 					width: video.width,
