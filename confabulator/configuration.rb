@@ -1,5 +1,37 @@
 class Configuration
 	
+	WIDESCREEN = [{
+			width: 1920,
+			height: 1080
+		},
+		{
+			width: 1280,
+			height: 720
+		},
+		{
+			width: 480,
+			height: 320
+		}]
+
+	STANDARD = [{
+			width: 1440,
+			height: 1080
+		},
+		{
+			width: 1024,
+			height: 768
+		},
+		{
+			width: 640,
+			height: 480
+		},
+		{
+			width: 480,
+			height: 320
+		}]
+
+	#NON_STANDARD = []
+
 	FORMATS = [
 		{
 			:vcodec => 'h264',
@@ -34,22 +66,22 @@ class Configuration
 
 	def generate_actions(video)
 
-		#1.7 for 16:9 or 1.3 for 4:3
-		if video.width > 1920 && video.height > 1080
-			#generate NATIVE, 1080p, 720p, 480p, HLS and DASH
 
-		elsif video.width == 1920 && video.height == 1080
-			#generate 1080p, 720p, 480p, HLS and DASH
+		# aspect_ratio = video.width / video.height
+		# if aspect_ratio > 1.7
+		# 	#widescreen
+		# else
+		# 	#normal
+		# end
 
-		elsif video.width > 1280 && video.height > 720
-			#generate NATIVE, 720p, 480p, HLS and DASH
+		if video.dar == "16:9" || video.dar == "16:10"
+			resolutions = WIDESCREEN.filter {|x| x[:width] <= video.width && x[:height] <= video.height}
 
-		elsif video.width == 1280 && video.height == 720
-			#generate 720p, 480p, HLS and DASH
-
-		elsif video.width < 1280 && video.height < 720
-			#NATIVE, HLS and DASH
-
+		else
+			resolutions = STANDARD.filter {|x| x[:width] <= video.width && x[:height] <= video.height}
+		end
+		resolutions.each do |res|
+			#generate the action for the resolution
 		end
 		return @actions
 	end
@@ -62,7 +94,7 @@ class Configuration
 		exists.catch do |error| 
 			puts "Sorry there was an #{error}"
 		end
-
+		#result is an array of actions
 		exists.then do |result|
 
 		end
