@@ -7,16 +7,20 @@ module Confabulator
             @options = options
             @resolution = "#{options[:width]}x#{options[:height]}"
             @video = video
-            @outputname = "#{video.path}_#{@resolution}.#{options[:extension]}"
+
+            path = File.dirname(video.path.gsub("\\", "/"))
+            name = File.basename(video.path.gsub("\\", "/"), '.*')
+            @outputname = "#{File.join(path, name)}_#{@resolution}.#{options[:extension]}"
+            @complete = false
         end
 
 
-    #resolution
-    #filename
-    #remux or re-encode
-    #output filename
+        attr_reader :complete    # Has been transcoded?
+        attr_reader :outputname  # filename
+        attr_reader :resolution  # resolution
+        attr_reader :options     # mime
 
-    	
+        attr_accessor :store
 
 
     	def transcode(thread)
@@ -41,6 +45,8 @@ module Confabulator
                 #method called with progress
                 @worker.notify progress
             end
+            @complete = true
+            self
         end
     end
 end

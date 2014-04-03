@@ -45,16 +45,18 @@ module Confabulator
 
 		FORMATS = [
 			{
-				:video_codec => 'libx264',  #'h264',
+				:video_codec => 'h264',  #'h264',
 				:audio_codec => 'aac',
 				:extension => 'mp4',
-				:custom => '-strict experimental'
+				:custom => '-strict experimental',
+				:mime => 'video/mp4'
 			},
 			{
-				:video_codec => 'libvpx', #'vp8',
-				:audio_codec => 'libvorbis',  #'vorbis',
+				#:video_codec => 'vp8', #'vp8',
+				#:audio_codec => 'vorbis',  #'vorbis',
 				:extension => 'webm',
-				:custom => '-strict experimental'
+				:custom => '-strict experimental',
+				:mime => 'video/webm'
 			}
 		]
 
@@ -78,6 +80,14 @@ module Confabulator
 		protected
 
 
+		S16_10 = '16:10'.freeze
+		S10_16 = '10:16'.freeze
+		S16_9  = '16:9'.freeze
+		S9_16  = '9:16'.freeze
+		S4_3   = '4:3'.freeze
+		S3_4   = '3:4'.freeze
+
+
 		def process_video(filename)
 			video = FFMPEG::Movie.new(filename)
 			raise InvalidVideo unless video.valid?
@@ -97,11 +107,11 @@ module Confabulator
 			end
 
 			case video.dar
-			when '16:10'.freeze, '10:16'.freeze
+			when S16_10, S10_16
 				resolutions = W_16_10.select {|x| x[width] <= video.width && x[height] <= video.height}
-			when '16:9'.freeze, '9:16'.freeze
+			when S16_9, S9_16
 				resolutions = W_16_9.select {|x| x[width] <= video.width && x[height] <= video.height}
-			when '4:3'.freeze, '3:4'.freeze
+			when S4_3, S3_4
 				resolutions = S_4_3.select {|x| x[width] <= video.width && x[height] <= video.height}
 			else
 				# for non-standard resolutions we'll keep the ratios
