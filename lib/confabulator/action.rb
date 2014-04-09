@@ -10,18 +10,30 @@ module Confabulator
 
             path = File.dirname(video.path.gsub("\\", "/"))
             name = File.basename(video.path.gsub("\\", "/"), '.*')
-            @outputname = "#{File.join(path, name)}_#{@resolution}.#{options[:extension]}"
+            
             @complete = false
+
+            @poster = !!@options[:poster]
+            if is_poster?
+                @outputname = "#{File.join(path, name)}_#{@resolution}.jpg"
+                @options[:mime] = 'image/jpeg'
+            else
+                @outputname = "#{File.join(path, name)}_#{@resolution}.#{options[:extension]}"
+            end
         end
 
+
+        attr_accessor :store
 
         attr_reader :complete    # Has been transcoded?
         attr_reader :outputname  # filename
         attr_reader :resolution  # resolution
         attr_reader :options     # mime
+        
 
-        attr_accessor :store
-
+        def is_poster?
+            @poster
+        end
 
     	def transcode(thread)
             @thread = thread
@@ -41,11 +53,15 @@ module Confabulator
 
 
         def do_work
-            @video.transcode(@outputname, @options) do |progress|
-                #method called with progress
-                @worker.notify progress
+            if @poster
+                @video.screenshot(@outputname, seek_time: @options[:poster], resolution: @resolution)
+            else
+                @video.transcode(@outputname, @options) do |progress|
+                    #method called with progress
+                    @worker.notify progress
+                end
+                @complete = true
             end
-            @complete = true
             self
         end
     end

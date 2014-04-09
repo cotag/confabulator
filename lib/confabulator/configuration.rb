@@ -142,7 +142,13 @@ module Confabulator
 
 			# build a list of actions that need to be performed so the videos are in the correct format
 			actions = []
+			time = (video.duration * 0.3).to_i
+
 			resolutions.each do |res|
+				actions << Action.new(video, res.merge({
+					poster: time
+				}))
+				
 				FORMATS.each do |format|
 					actions << Action.new(video, res.merge(format))
 				end
