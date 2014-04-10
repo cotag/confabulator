@@ -60,36 +60,31 @@ module Confabulator
 			}
 		]
 
-		def initialize(thread = Libuv::Loop.default)
-			@thread = thread
+		def initialize(file)
+			@file = file
+			process_video(@file)
 		end
 
+
+		attr_reader :file    # the filename
+        attr_reader :video   # the ffmpeg wrapper
+        attr_reader :actions # the actions required for conversion
 
 
 		#use streamio to check the file and raise an error if the file is fucked
 		class InvalidVideo < TypeError; end
 
 
-		def check(file)
-			@thread.work do
-				process_video(file)
-			end
-		end
-
-
 		protected
 
 
-		S16_10 = '16:10'.freeze
-		S10_16 = '10:16'.freeze
-		S16_9  = '16:9'.freeze
-		S9_16  = '9:16'.freeze
-		S4_3   = '4:3'.freeze
-		S3_4   = '3:4'.freeze
+		S16_10 = 10.0 / 16.0
+		S16_9  = 9.0 / 16.0
+		S4_3   = 3.0 / 4.0
 
 
 		def process_video(filename)
-			video = FFMPEG::Movie.new(filename)
+			@video = FFMPEG::Movie.new(filename)
 			raise InvalidVideo unless video.valid?
 			raise InvalidVideo if video.video_codec.nil?
 			return generate_actions(video)
@@ -98,6 +93,7 @@ module Confabulator
 		def generate_actions(video)
 			# Check for portrait videos vs the regular landscape
 			portrait = video.width < video.height
+
 			if portrait
 				width = :height
 				height = :width
@@ -106,37 +102,54 @@ module Confabulator
 				height = :height
 			end
 
-			case video.dar
-			when S16_10, S10_16
-				resolutions = W_16_10.select {|x| x[width] <= video.width && x[height] <= video.height}
-			when S16_9, S9_16
-				resolutions = W_16_9.select {|x| x[width] <= video.width && x[height] <= video.height}
-			when S4_3, S3_4
-				resolutions = S_4_3.select {|x| x[width] <= video.width && x[height] <= video.height}
-			else
-				# for non-standard resolutions we'll keep the ratios
-				# and base the width off the heights of the 16:10 files
-				resolutions = []
-				ratio = video.__send__(width) / video.__send__(height)
-				new_height = video.__send__(height)
+			resolutions = []
+			list = nil
+			ratio = video.__send__(height).to_f / video.__send__(width).to_f
+
+			case ratio
+			when S16_10
+				list = W_16_10
+			when S16_9
+				#resolutions = W_16_9.select {|x| x[width] <= video.width && x[height] <= video.height}
+				list = W_16_9
+			when S4_3
+				#resolutions = S_4_3.select {|x| x[width] <= video.width && x[height] <= video.height}
+				list = S_4_3
+			end
+
+			# Compile a list of resolutions we want to build
+			if list.nil?
+				# non-standard resolution
+				# keep the ratios and base the width off the heights of the 16:10 files
+				new_width = video.__send__(width)
 				W_16_10.each do |x|
-					if x[height] <= new_height
-						new_height = x[height]
-						new_width = new_height * ratio
+					if x[width] <= new_width
+						new_width = x[width]
+						new_height = (new_width * ratio).round
 
 						resolutions << {
-							width => new_width,
-							height => new_height
+							:width => new_width,
+							:height => new_height
+						}
+					end
+				end
+			else
+				# Standard resolution
+				list.each do |res|
+					if res[width] <= video.width && res[height] <= video.height
+						resolutions << {
+							:width => res[width],
+							:height => res[height]
 						}
 					end
 				end
 			end
 
 			# have a native resolution version available
-			unless resolutions.length > 0 && resolutions[0][width] == video.__send__(width) && resolutions[0][height] == video.__send__(height)
+			unless resolutions.length > 0 && resolutions[0][:width] == video.width && resolutions[0][:height] == video.height
 				resolutions << {
-					width => video.width,
-					height => video.height
+					:width => video.width,
+					:height => video.height
 				}
 			end
 
@@ -153,7 +166,7 @@ module Confabulator
 					actions << Action.new(video, res.merge(format))
 				end
 			end
-			return actions
+			@actions = actions
 		end
 	end
 end

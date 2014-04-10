@@ -13,8 +13,7 @@ Gem::Specification.new do |gem|
     gem.required_ruby_version = '>= 1.9.2'
     gem.require_paths = ["lib"]
 
-    gem.add_runtime_dependency     'libuv', '>= 0.11.20'
-    gem.add_runtime_dependency     'streamio-ffmpeg'
+    #gem.add_runtime_dependency     'streamio-ffmpeg'
 
     gem.add_development_dependency 'rspec', '>= 2.14'
     gem.add_development_dependency 'rake', '>= 10.1'

@@ -1,6 +1,5 @@
 
 # Required Gems
-require 'libuv'
 require 'streamio-ffmpeg'
 
 

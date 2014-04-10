@@ -6,6 +6,7 @@ module Confabulator
     	def initialize(video, options)
             @options = options
             @resolution = "#{options[:width]}x#{options[:height]}"
+            @options[:resolution] = @resolution  # add the conversion resolution to the options
             @video = video
 
             path = File.dirname(video.path.gsub("\\", "/"))
@@ -35,34 +36,16 @@ module Confabulator
             @poster
         end
 
-    	def transcode(thread)
-            @thread = thread
-            @worker = @thread.defer
-
-            @thread.work(method(:do_work)).then(proc { |result|
-                @worker.resolve(result)
-            }, proc { |err|
-                @worker.reject(err)
-            })
-
-            @worker.promise
-    	end
-
-
-        protected
-
-
-        def do_work
+    	def transcode
             if @poster
                 @video.screenshot(@outputname, seek_time: @options[:poster], resolution: @resolution)
             else
-                @video.transcode(@outputname, @options) do |progress|
+                @video.transcode(@outputname, @options, { validate: false }) do |progress|
                     #method called with progress
-                    @worker.notify progress
+                    yield progress if block_given?
                 end
                 @complete = true
             end
-            self
-        end
+    	end
     end
 end
