@@ -5,41 +5,62 @@ module Confabulator
 		
 		W_16_10 = [{
 				width: 1920,
-				height: 1200
+				height: 1200,
+				video_bitrate: 3500,
+				audio_bitrate: 192,
+				x264_vprofile: 'high'
 			},
 			{
 				width: 1280,
-				height: 800
+				height: 800,
+				video_bitrate: 2000,
+				audio_bitrate: 128
 			},
 			{
 				width: 768,
-				height: 480
+				height: 480,
+				video_bitrate: 850,
+				audio_bitrate: 128
 			}]
 
 		W_16_9 = [{
 				width: 1920,
-				height: 1080
+				height: 1080,
+				video_bitrate: 3000,
+				audio_bitrate: 192,
+				x264_vprofile: 'high'
 			},
 			{
 				width: 1280,
-				height: 720
+				height: 720,
+				video_bitrate: 2000,
+				audio_bitrate: 128
 			},
 			{
 				width: 854,
-				height: 480
+				height: 480,
+				video_bitrate: 900,
+				audio_bitrate: 128
 			}]
 
 		S_4_3 = [{
 				width: 1440,
-				height: 1080
+				height: 1080,
+				video_bitrate: 3000,
+				audio_bitrate: 192,
+				x264_vprofile: 'high'
 			},
 			{
 				width: 1024,
-				height: 768
+				height: 768,
+				video_bitrate: 2000,
+				audio_bitrate: 128
 			},
 			{
 				width: 640,
-				height: 480
+				height: 480,
+				video_bitrate: 800,
+				audio_bitrate: 128
 			}]
 
 
@@ -49,14 +70,19 @@ module Confabulator
 				:audio_codec => 'aac',
 				:extension => 'mp4',
 				:custom => '-strict experimental',
-				:mime => 'video/mp4'
+				:mime => 'video/mp4',
+				:autorotate => true,
+				:x264_vprofile => 'baseline'
 			},
 			{
 				#:video_codec => 'vp8', #'vp8',
 				#:audio_codec => 'vorbis',  #'vorbis',
 				:extension => 'webm',
-				:custom => '-strict experimental',
-				:mime => 'video/webm'
+				# good + 0 == best quality just faster, crf 4, min 0 max 40 == good quality
+				:custom => '-strict experimental -quality good -cpu-used 0 -threads 4 -crf 4 -qmin 0 -qmax 40',
+				:mime => 'video/webm',
+				:autorotate => true,
+				:remove => [:x264_vprofile] # ensure this option is not included for webm
 			}
 		]
 
@@ -163,7 +189,9 @@ module Confabulator
 				}))
 				
 				FORMATS.each do |format|
-					actions << Action.new(video, res.merge(format))
+					opts = format.merge(res)
+					format[:remove].each { |key| opts.delete(key) } if format[:remove]
+					actions << Action.new(video, opts)
 				end
 			end
 			@actions = actions
