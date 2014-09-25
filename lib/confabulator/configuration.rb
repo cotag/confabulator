@@ -63,29 +63,6 @@ module Confabulator
 				audio_bitrate: 128
 			}]
 
-
-		FORMATS = [
-			{
-				:video_codec => 'h264',  #'h264',
-				:audio_codec => 'aac',
-				:extension => 'mp4',
-				:custom => '-strict experimental',
-				:mime => 'video/mp4',
-				:autorotate => true,
-				:x264_vprofile => 'baseline'
-			},
-			{
-				#:video_codec => 'vp8', #'vp8',
-				#:audio_codec => 'vorbis',  #'vorbis',
-				:extension => 'webm',
-				# good + 0 == best quality just faster, crf 4, min 0 max 40 == good quality
-				:custom => '-strict experimental -quality good -cpu-used 0 -threads 4 -crf 4 -qmin 0 -qmax 40',
-				:mime => 'video/webm',
-				:autorotate => true,
-				:remove => [:x264_vprofile] # ensure this option is not included for webm
-			}
-		]
-
 		S16_10 = 10.0 / 16.0
 		S16_9  = 9.0 / 16.0
 		S4_3   = 3.0 / 4.0
@@ -125,30 +102,30 @@ module Confabulator
 				# non-standard resolution
 				# keep the ratios and base the width off the heights of the 16:10 files
 				W_16_10.each do |x|
-					if x[width] <= new_width
+					if x[:width] <= new_width
 						new_width = x[width]
 						new_height = (new_width * ratio).round
 
-						resolutions << {
+						resolutions << x.merge({
 							:width => new_width,
 							:height => new_height
-						}
+						})
 					end
 				end
 			else
 				# Standard resolution
 				list.each do |res|
 					if res[:width] <= new_width
-						resolutions << {
+						resolutions << res.merge({
 							:width => res[width],
 							:height => res[height]
-						}
+						})
 					end
 				end
 			end
 
 			# have a native resolution version available
-			unless resolutions.length > 0 && resolutions[0][:width] == objWidth && resolutions[0][:height] == objHeight
+			if resolutions.length == 0 || !(resolutions[0][:width] == objWidth && resolutions[0][:height] == objHeight)
 				resolutions << {
 					:width => objWidth,
 					:height => objHeight
@@ -159,32 +136,62 @@ module Confabulator
 		end
 
 
-		def initialize(file)
-			@file = file
-			process_video(@file)
+		def initialize(file, type)
+			@filename = file
+			self.__send__ :"process_#{type}"
 		end
 
 
-		attr_reader :file    # the filename
-		attr_reader :video   # the ffmpeg wrapper
+		attr_reader :filename
+		attr_reader :meta    # the ffmpeg / magick wrapper
 		attr_reader :actions # the actions required for conversion
 
 
-		#use streamio to check the file and raise an error if the file is fucked
+		#use streamio to check the file and raise an error if the file is bad
+		class InvalidImage < TypeError; end
 		class InvalidVideo < TypeError; end
 
 
 		protected
 
 
-		def process_video(filename)
-			@video = FFMPEG::Movie.new(filename)
-			raise InvalidVideo unless video.valid?
-			raise InvalidVideo if video.video_codec.nil?
-			return generate_actions(video)
+		def process_video
+			@meta = FFMPEG::Movie.new(filename)
+			raise InvalidVideo unless meta.valid?
+			raise InvalidVideo if meta.video_codec.nil?
+			video_actions(meta)
 		end
 
-		def generate_actions(video)
+		def process_image
+			@meta = Magick::Image.new(filename)
+			raise InvalidImage unless meta.valid?
+			image_actions(meta)
+		end
+
+
+		VIDEO_FORMATS = [
+			{
+				:video_codec => 'h264',  #'h264',
+				:audio_codec => 'aac',
+				:extension => 'mp4',
+				:custom => '-strict experimental',
+				:mime => 'video/mp4',
+				:autorotate => true,
+				:x264_vprofile => 'baseline'
+			},
+			{
+				#:video_codec => 'vp8', #'vp8',
+				#:audio_codec => 'vorbis',  #'vorbis',
+				:extension => 'webm',
+				# good + 0 == best quality just faster, crf 4, min 0 max 40 == good quality
+				:custom => '-strict experimental -quality good -cpu-used 0 -threads 4 -crf 4 -qmin 0 -qmax 40',
+				:mime => 'video/webm',
+				:autorotate => true,
+				:remove => [:x264_vprofile] # ensure this option is not included for webm
+			}
+		]
+
+		def video_actions(video)
 			resolutions = Configuration.calculate_sizes(video.width, video.height)
 
 			# build a list of actions that need to be performed so the videos are in the correct format
@@ -192,16 +199,48 @@ module Confabulator
 			time = (video.duration * 0.3).to_i
 
 			resolutions.each do |res|
-				actions << Action.new(video, res.merge({
+				actions << VideoAction.new(video, res.merge({
 					poster: time
 				}))
 				
-				FORMATS.each do |format|
+				VIDEO_FORMATS.each do |format|
 					opts = format.merge(res)
 					format[:remove].each { |key| opts.delete(key) } if format[:remove]
-					actions << Action.new(video, opts)
+					actions << VideoAction.new(video, opts)
 				end
 			end
+			@actions = actions
+		end
+
+
+		IMAGE_FORMATS = Set.new(['PNG', 'JPEG', 'GIF'])
+
+		def image_actions(image)
+			resolutions = Configuration.calculate_sizes(image.width, image.height)
+
+			# build a list of actions that need to be performed so the videos are in the correct format
+			actions = []
+
+			# Do we need to change format?
+			if IMAGE_FORMATS.includes? image.codec
+				ext = image.codec.downcase
+				options = {
+					mime: "image/#{ext}",
+					extension: ext
+				}
+			else
+				# We'll always use a lossless format
+				options = {
+					mime: 'image/png',
+					extension: 'png'
+				}
+			end
+
+			# Create an image for each resolution
+			resolutions.each do |res|
+				actions << ImageAction.new(image, res.merge(options))
+			end
+
 			@actions = actions
 		end
 	end

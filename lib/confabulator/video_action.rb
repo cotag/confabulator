@@ -1,6 +1,6 @@
 
 module Confabulator
-    class Action
+    class VideoAction
     	
 
     	def initialize(video, options)
