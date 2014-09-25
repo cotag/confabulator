@@ -86,51 +86,28 @@ module Confabulator
 			}
 		]
 
-		def initialize(file)
-			@file = file
-			process_video(@file)
-		end
-
-
-		attr_reader :file    # the filename
-        attr_reader :video   # the ffmpeg wrapper
-        attr_reader :actions # the actions required for conversion
-
-
-		#use streamio to check the file and raise an error if the file is fucked
-		class InvalidVideo < TypeError; end
-
-
-		protected
-
-
 		S16_10 = 10.0 / 16.0
 		S16_9  = 9.0 / 16.0
 		S4_3   = 3.0 / 4.0
 
-
-		def process_video(filename)
-			@video = FFMPEG::Movie.new(filename)
-			raise InvalidVideo unless video.valid?
-			raise InvalidVideo if video.video_codec.nil?
-			return generate_actions(video)
-		end
-
-		def generate_actions(video)
+		def self.calculate_sizes(objWidth, objHeight)
 			# Check for portrait videos vs the regular landscape
-			portrait = video.width < video.height
+			portrait = objWidth < objHeight
 
 			if portrait
 				width = :height
 				height = :width
+				ratio = objWidth.to_f / objHeight.to_f
+				new_width = objHeight
 			else
 				width = :width
 				height = :height
+				ratio = objHeight.to_f / objWidth.to_f
+				new_width = objWidth
 			end
 
 			resolutions = []
 			list = nil
-			ratio = video.__send__(height).to_f / video.__send__(width).to_f
 
 			case ratio
 			when S16_10
@@ -147,7 +124,6 @@ module Confabulator
 			if list.nil?
 				# non-standard resolution
 				# keep the ratios and base the width off the heights of the 16:10 files
-				new_width = video.__send__(width)
 				W_16_10.each do |x|
 					if x[width] <= new_width
 						new_width = x[width]
@@ -162,7 +138,7 @@ module Confabulator
 			else
 				# Standard resolution
 				list.each do |res|
-					if res[width] <= video.width && res[height] <= video.height
+					if res[:width] <= new_width
 						resolutions << {
 							:width => res[width],
 							:height => res[height]
@@ -172,12 +148,44 @@ module Confabulator
 			end
 
 			# have a native resolution version available
-			unless resolutions.length > 0 && resolutions[0][:width] == video.width && resolutions[0][:height] == video.height
+			unless resolutions.length > 0 && resolutions[0][:width] == objWidth && resolutions[0][:height] == objHeight
 				resolutions << {
-					:width => video.width,
-					:height => video.height
+					:width => objWidth,
+					:height => objHeight
 				}
 			end
+
+			resolutions
+		end
+
+
+		def initialize(file)
+			@file = file
+			process_video(@file)
+		end
+
+
+		attr_reader :file    # the filename
+		attr_reader :video   # the ffmpeg wrapper
+		attr_reader :actions # the actions required for conversion
+
+
+		#use streamio to check the file and raise an error if the file is fucked
+		class InvalidVideo < TypeError; end
+
+
+		protected
+
+
+		def process_video(filename)
+			@video = FFMPEG::Movie.new(filename)
+			raise InvalidVideo unless video.valid?
+			raise InvalidVideo if video.video_codec.nil?
+			return generate_actions(video)
+		end
+
+		def generate_actions(video)
+			resolutions = Configuration.calculate_sizes(video.width, video.height)
 
 			# build a list of actions that need to be performed so the videos are in the correct format
 			actions = []
