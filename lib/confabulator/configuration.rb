@@ -222,7 +222,7 @@ module Confabulator
 			actions = []
 
 			# Do we need to change format?
-			if IMAGE_FORMATS.includes? image.codec
+			if IMAGE_FORMATS.include? image.codec
 				ext = image.codec.downcase
 				options = {
 					mime: "image/#{ext}",
