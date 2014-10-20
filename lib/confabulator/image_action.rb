@@ -13,7 +13,14 @@ module Confabulator
             name = File.basename(image.path.gsub("\\", "/"), '.*')
             
             @complete = false
-            @outputname = "#{File.join(path, name)}_#{@resolution}.#{options[:extension]}"
+
+            # avoid name clashes between posters and the original file when
+            # transcoding the original
+            if is_poster?
+                @outputname = "#{File.join(path, name)}_#{@resolution}.#{options[:extension]}"
+            else
+                @outputname = "#{File.join(path, name)}_#{@resolution}_media.#{options[:extension]}"
+            end
         end
 
 
@@ -26,7 +33,7 @@ module Confabulator
         
 
         def is_poster?
-            true
+            @options[:poster]
         end
 
     	def transcode

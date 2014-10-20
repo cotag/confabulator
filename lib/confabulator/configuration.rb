@@ -238,8 +238,17 @@ module Confabulator
 
 			# Create an image for each resolution
 			resolutions.each do |res|
-				actions << ImageAction.new(image, res.merge(options))
+				actions << ImageAction.new(image, res.merge(options.merge({
+					poster: true
+				})))
 			end
+
+			# store original version, potentially in a different format to the original
+			actions << ImageAction.new(image, options.merge({
+				width: image.width,
+				height: image.height,
+				poster: false
+			}))
 
 			@actions = actions
 		end
