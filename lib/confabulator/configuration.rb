@@ -207,8 +207,8 @@ module Confabulator
 					opts = format.merge(res)
 					format[:remove].each { |key| opts.delete(key) } if format[:remove]
 
-					# ensure the audio track isn't transcoded in a higher bitrate than available
-					opts[:audio_bitrate] = [opts[:audio_bitrate], video.audio_bitrate / 1000].min
+					# clamp audio bitrate between 24k and opts[:audio_bitrate]
+					opts[:audio_bitrate] = [[opts[:audio_bitrate], video.audio_bitrate / 1000].min, 24].max
 					actions << VideoAction.new(video, opts)
 				end
 			end
