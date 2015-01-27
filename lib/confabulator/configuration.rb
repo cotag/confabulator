@@ -208,7 +208,9 @@ module Confabulator
 					format[:remove].each { |key| opts.delete(key) } if format[:remove]
 
 					# clamp audio bitrate between 24k and opts[:audio_bitrate]
-					opts[:audio_bitrate] = [[opts[:audio_bitrate], video.audio_bitrate / 1000].min, 24].max
+					if opts[:audio_bitrate]
+						opts[:audio_bitrate] = [[opts[:audio_bitrate], video.audio_bitrate / 1000].min, 24].max
+					end
 					actions << VideoAction.new(video, opts)
 				end
 			end
