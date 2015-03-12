@@ -106,6 +106,9 @@ module Confabulator
 						new_width = x[width]
 						new_height = (new_width * ratio).round
 
+						# Heights must be divisible by 2
+						new_height = new_height - (new_height % 2)
+
 						resolutions << x.merge({
 							:width => new_width,
 							:height => new_height
