@@ -2,13 +2,15 @@ require 'set'
 
 module Confabulator
 	class Configuration
+		PROFILE_HIGH = 'high'.freeze
+
 		
 		W_16_10 = [{
 				width: 1920,
 				height: 1200,
 				video_bitrate: 3500,
 				audio_bitrate: 192,
-				x264_vprofile: 'high'
+				x264_vprofile: PROFILE_HIGH
 			},
 			{
 				width: 1280,
@@ -28,7 +30,7 @@ module Confabulator
 				height: 1080,
 				video_bitrate: 3000,
 				audio_bitrate: 192,
-				x264_vprofile: 'high'
+				x264_vprofile: PROFILE_HIGH
 			},
 			{
 				width: 1280,
@@ -48,7 +50,7 @@ module Confabulator
 				height: 1080,
 				video_bitrate: 3000,
 				audio_bitrate: 192,
-				x264_vprofile: 'high'
+				x264_vprofile: PROFILE_HIGH
 			},
 			{
 				width: 1024,
@@ -131,7 +133,9 @@ module Confabulator
 			if resolutions.length == 0 || !(resolutions[0][:width] == objWidth && resolutions[0][:height] == objHeight)
 				resolutions << {
 					:width => objWidth,
-					:height => objHeight
+					:height => objHeight,
+					:x264_vprofile => PROFILE_HIGH,
+					:audio_bitrate => 192
 				}
 			end
 
@@ -208,7 +212,7 @@ module Confabulator
 				
 				VIDEO_FORMATS.each do |format|
 					opts = format.merge(res)
-					format[:remove].each { |key| opts.delete(key) } if format[:remove]
+					opts[:remove].each { |key| opts.delete(key) } if opts[:remove]
 
 					# clamp audio bitrate between 24k and opts[:audio_bitrate]
 					if opts[:audio_bitrate]
