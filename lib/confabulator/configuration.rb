@@ -143,8 +143,13 @@ module Confabulator
 		end
 
 
-		def initialize(file, type)
+		def initialize(file, type, options = {})
 			@filename = file
+			@options = options
+			# Options:
+			# * native_only: only have a single copy of the video
+			# * formats: [array of whitelisted file extensions]
+			# * fast: if resoltion and codecs are correct then don't transcode
 			self.__send__ :"process_#{type}"
 		end
 
@@ -199,7 +204,18 @@ module Confabulator
 		]
 
 		def video_actions(video)
-			resolutions = Configuration.calculate_sizes(video.width, video.height)
+			# Check if multiple resolutions are desirable
+			resolutions = []
+			if @options[:native_only]
+				resolutions << {
+					:width => video.width,
+					:height => video.height,
+					:x264_vprofile => PROFILE_HIGH,
+					:audio_bitrate => 192
+				}
+			else
+				resolutions = Configuration.calculate_sizes(video.width, video.height)
+			end
 
 			# build a list of actions that need to be performed so the videos are in the correct format
 			actions = []
@@ -211,6 +227,8 @@ module Confabulator
 				}))
 				
 				VIDEO_FORMATS.each do |format|
+					next if @options[:formats] && !@options[:formats].include?(format[:extension])
+
 					opts = format.merge(res)
 					opts[:remove].each { |key| opts.delete(key) } if opts[:remove]
 
@@ -218,7 +236,7 @@ module Confabulator
 					if opts[:audio_bitrate]
 						opts[:audio_bitrate] = [[opts[:audio_bitrate], video.audio_bitrate / 1000].min, 24].max
 					end
-					actions << VideoAction.new(video, opts)
+					actions << VideoAction.new(video, opts.merge(@options))
 				end
 			end
 			@actions = actions

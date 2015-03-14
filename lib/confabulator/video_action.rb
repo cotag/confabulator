@@ -9,6 +9,8 @@ module Confabulator
             @options[:resolution] = @resolution  # add the conversion resolution to the options
             @video = video
 
+            @skip_transcode = false
+
             path = File.dirname(video.path.gsub("\\", "/"))
             name = File.basename(video.path.gsub("\\", "/"), '.*')
             
@@ -18,9 +20,26 @@ module Confabulator
             if is_poster?
                 @outputname = "#{File.join(path, name)}_#{@resolution}.jpg"
                 @options[:mime] = 'image/jpeg'
-            else
-                @outputname = "#{File.join(path, name)}_#{@resolution}.#{options[:extension]}"
+                return
             end
+
+            # Skip transcoding if there is a rough format and size match
+            if options[:fast] &&
+                options[:width] == video.width &&
+                options[:height] == video.height &&
+                ((options[:extension] == 'mp4' &&
+                    video.video_codec =~ /h264/i &&
+                    video.audio_codec =~ /aac/i) ||
+                (options[:extension] == 'webm' &&
+                    video.video_codec =~ /vp8|vp9/i &&
+                    video.audio_codec =~ /vorbis/i))
+
+                @outputname = video.path
+                @skip_transcode = true
+                return
+            end
+
+            @outputname = "#{File.join(path, name)}_#{@resolution}.#{options[:extension]}"
         end
 
 
@@ -40,9 +59,11 @@ module Confabulator
             if @poster
                 @video.screenshot(@outputname, seek_time: @options[:poster], resolution: @resolution)
             else
-                @video.transcode(@outputname, @options, { validate: false }) do |progress|
-                    #method called with progress
-                    yield progress if block_given?
+                unless @skip_transcode
+                    @video.transcode(@outputname, @options, { validate: false }) do |progress|
+                        #method called with progress
+                        yield progress if block_given?
+                    end
                 end
                 @complete = true
             end
