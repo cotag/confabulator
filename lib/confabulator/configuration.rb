@@ -189,7 +189,8 @@ module Confabulator
 				:custom => '-strict experimental',
 				:mime => 'video/mp4',
 				:autorotate => true,
-				:x264_vprofile => 'baseline'
+				:x264_vprofile => 'baseline',
+				:threads => 2
 			},
 			{
 				#:video_codec => 'vp8', #'vp8',
@@ -199,6 +200,7 @@ module Confabulator
 				:custom => '-strict experimental -quality good -cpu-used 0 -threads 4 -crf 4 -qmin 0 -qmax 40',
 				:mime => 'video/webm',
 				:autorotate => true,
+				:threads => 2,
 				:remove => [:x264_vprofile] # ensure this option is not included for webm
 			}
 		]
