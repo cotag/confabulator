@@ -37,7 +37,7 @@ module Confabulator
         end
 
     	def transcode
-            @image.transcode(@outputname, "-resize #{@resolution}")
+            @image.transcode(@outputname, "-resize #{@resolution} -auto-orient")
             @complete = true
     	end
     end
