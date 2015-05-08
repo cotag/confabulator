@@ -238,6 +238,13 @@ module Confabulator
 					if opts[:audio_bitrate]
 						opts[:audio_bitrate] = [[opts[:audio_bitrate], video.audio_bitrate / 1000].min, 24].max
 					end
+					
+					# Ensure there are a fixed number of frames for a standard GOP size
+					# This allows us to support DASH
+					frame_rate = video.frame_rate.to_i
+					opts[:convert_frame_rate] = frame_rate
+					opts[:convert_keyframe_interval] = (frame_rate * 1.5).ceil
+					
 					actions << VideoAction.new(video, opts.merge(@options))
 				end
 			end
