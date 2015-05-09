@@ -243,7 +243,7 @@ module Confabulator
 					# This allows us to support DASH
 					frame_rate = video.frame_rate.to_i
 					opts[:convert_frame_rate] = frame_rate
-					opts[:convert_keyframe_interval] = (frame_rate * 1.5).ceil
+					opts[:convert_keyframe_interval] = frame_rate * 2
 					
 					actions << VideoAction.new(video, opts.merge(@options))
 				end
