@@ -67,7 +67,7 @@ module Confabulator
 
 		S16_10 = 10.0 / 16.0
 		S16_9  = 9.0 / 16.0
-		S4_3   = 3.0 / 4.0
+		S4_3   = 3.0 / 4.0     # / # -- Ruby code editors seem to struggle with division
 
 		def self.calculate_sizes(objWidth, objHeight)
 			# Check for portrait videos vs the regular landscape
@@ -197,7 +197,7 @@ module Confabulator
 				#:audio_codec => 'vorbis',  #'vorbis',
 				:extension => 'webm',
 				# good + 0 == best quality just faster, crf 4, min 0 max 40 == good quality
-				:custom => '-strict experimental -quality good -cpu-used 0 -threads 4 -crf 4 -qmin 0 -qmax 40',
+				:custom => '-strict experimental -quality good -cpu-used 0 -crf 4 -qmin 0 -qmax 40',
 				:mime => 'video/webm',
 				:autorotate => true,
 				:threads => 2,
@@ -238,6 +238,7 @@ module Confabulator
 					if opts[:audio_bitrate]
 						opts[:audio_bitrate] = [[opts[:audio_bitrate], video.audio_bitrate / 1000].min, 24].max
 					end
+                    # / # Editor fix
 					
 					# Ensure there are a fixed number of frames for a standard GOP size
 					# This allows us to support DASH
