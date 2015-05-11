@@ -242,7 +242,7 @@ module Confabulator
 					
 					# Ensure there are a fixed number of frames for a standard GOP size
 					# This allows us to support DASH
-					frame_rate = video.frame_rate.to_i
+					frame_rate = video.frame_rate.ceil
 					opts[:convert_frame_rate] = frame_rate
 					opts[:convert_keyframe_interval] = frame_rate * 2
 					
