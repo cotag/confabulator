@@ -186,7 +186,7 @@ module Confabulator
 				:video_codec => 'h264',  #'h264',
 				:audio_codec => 'aac',
 				:extension => 'mp4',
-				:custom => '-strict experimental',
+				:custom => '-strict experimental -pix_fmt yuv420p',
 				:mime => 'video/mp4',
 				:autorotate => true,
 				:x264_vprofile => 'baseline',
@@ -197,7 +197,7 @@ module Confabulator
 				#:audio_codec => 'vorbis',  #'vorbis',
 				:extension => 'webm',
 				# good + 0 == best quality just faster, crf 4, min 0 max 40 == good quality
-				:custom => '-strict experimental -quality good -cpu-used 0 -crf 4 -qmin 0 -qmax 40',
+				:custom => '-strict experimental -quality good -cpu-used 0 -crf 4 -qmin 0 -qmax 40 -pix_fmt yuv420p',
 				:mime => 'video/webm',
 				:autorotate => true,
 				:threads => 2,
