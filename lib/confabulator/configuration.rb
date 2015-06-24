@@ -5,7 +5,20 @@ module Confabulator
 		PROFILE_HIGH = 'high'.freeze
 
 		
-		W_16_10 = [{
+		W_16_10 = [
+			{   # 8K
+				width: 7680,
+				height: 4800,
+				video_bitrate: 7500,
+				audio_bitrate: 192
+			},
+			{   # 4K
+				width: 3840,
+				height: 2400,
+				video_bitrate: 4000,
+				audio_bitrate: 192
+			},
+			{
 				width: 1920,
 				height: 1200,
 				video_bitrate: 3500,
@@ -25,27 +38,53 @@ module Confabulator
 				audio_bitrate: 128
 			}]
 
-		W_16_9 = [{
+		W_16_9 = [
+			{   # 8K
+				width: 7680,
+				height: 4320,
+				video_bitrate: 7000,
+				audio_bitrate: 192
+			},
+			{   # 4K
+				width: 3840,
+				height: 2160,
+				video_bitrate: 3500,
+				audio_bitrate: 192
+			},
+			{   # 1080p
 				width: 1920,
 				height: 1080,
 				video_bitrate: 3000,
 				audio_bitrate: 192,
 				x264_vprofile: PROFILE_HIGH
 			},
-			{
+			{   # 720p
 				width: 1280,
 				height: 720,
 				video_bitrate: 2000,
 				audio_bitrate: 128
 			},
-			{
+			{   # 480p
 				width: 854,
 				height: 480,
 				video_bitrate: 900,
 				audio_bitrate: 128
 			}]
 
-		S_4_3 = [{
+		S_4_3 = [
+			{
+				width: 6400,
+				height: 4800,
+				video_bitrate: 6500,
+				audio_bitrate: 192
+			},
+			{
+				width: 3200,
+				height: 2400,
+				video_bitrate: 4000,
+				audio_bitrate: 192
+			},
+			{
 				width: 1440,
 				height: 1080,
 				video_bitrate: 3000,
@@ -53,8 +92,8 @@ module Confabulator
 				x264_vprofile: PROFILE_HIGH
 			},
 			{
-				width: 1024,
-				height: 768,
+				width: 960,
+				height: 720,
 				video_bitrate: 2000,
 				audio_bitrate: 128
 			},
@@ -230,6 +269,15 @@ module Confabulator
 				
 				VIDEO_FORMATS.each do |format|
 					next if @options[:formats] && !@options[:formats].include?(format[:extension])
+
+					# Upgrade encoding to h265
+                    if (opts[:width] > 1920 || opts[:height] > 1200) && opts[:video_codec] == 'h264'
+                    	opts[:video_codec] = 'libx265'
+                    	remove = opts[:remove] || []
+                    	remove << :x264_vprofile
+                    	opts[:remove] = remove
+                    	opts[:custom] = "#{opts[:custom]} -preset medium"
+                    end
 
 					opts = format.merge(res)
 					opts[:remove].each { |key| opts.delete(key) } if opts[:remove]
