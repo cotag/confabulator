@@ -269,6 +269,7 @@ module Confabulator
 				
 				VIDEO_FORMATS.each do |format|
 					next if @options[:formats] && !@options[:formats].include?(format[:extension])
+					opts = format.merge(res)
 
 					# Upgrade encoding to h265
                     if (opts[:width] > 1920 || opts[:height] > 1200) && opts[:video_codec] == 'h264'
@@ -279,7 +280,6 @@ module Confabulator
                     	opts[:custom] = "#{opts[:custom]} -preset medium"
                     end
 
-					opts = format.merge(res)
 					opts[:remove].each { |key| opts.delete(key) } if opts[:remove]
 
 					# clamp audio bitrate between 24k and opts[:audio_bitrate]
