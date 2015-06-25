@@ -232,11 +232,11 @@ module Confabulator
 				:threads => 2
 			},
 			{
-				:video_codec => 'libvpx-vp9', #'vp8',
+				:video_codec => 'libvpx', #'vp8',
 				:audio_codec => 'libopus',  #'vorbis',
 				:extension => 'webm',
-				# good + 0 == best quality just faster, crf 4, min 0 max 40 == good quality
-				:custom => '-strict experimental -quality good -cpu-used 0 -crf 4 -qmin 0 -qmax 40 -aq 4 -pix_fmt yuv420p',
+				# good + 0 == best quality just faster, crf 8, min 0 max 40 == good quality
+				:custom => '-strict experimental -quality good -cpu-used 1 -crf 10 -qmin 0 -qmax 40 -pix_fmt yuv420p',
 				:mime => 'video/webm',
 				:autorotate => true,
 				:threads => 2,
@@ -272,12 +272,17 @@ module Confabulator
 					opts = format.merge(res)
 
 					# Upgrade encoding to h265
-                    if (opts[:width] > 1920 || opts[:height] > 1200) && opts[:video_codec] == 'h264'
-                    	opts[:video_codec] = 'libx265'
-                    	remove = opts[:remove] || []
-                    	remove << :x264_vprofile
-                    	opts[:remove] = remove
-                    	opts[:custom] = "#{opts[:custom]} -preset medium"
+                    if opts[:width] > 1920 || opts[:height] > 1200
+                    	if opts[:video_codec] == 'h264'
+	                    	opts[:video_codec] = 'libx265'
+	                    	remove = opts[:remove] || []
+	                    	remove << :x264_vprofile
+	                    	opts[:remove] = remove
+	                    	opts[:custom] = "#{opts[:custom]} -preset medium"
+	                    elsif opts[:video_codec] == 'libvpx'
+	                    	# WARN:: this codec takes hours to encode a 20second video
+	                    	opts[:video_codec] = 'libvpx-vp9'
+	                    end
                     end
 
 					opts[:remove].each { |key| opts.delete(key) } if opts[:remove]
@@ -291,8 +296,8 @@ module Confabulator
 					# Ensure there are a fixed number of frames for a standard GOP size
 					# This allows us to support DASH
 					frame_rate = video.frame_rate.ceil
-					opts[:convert_frame_rate] = frame_rate
-					opts[:convert_keyframe_interval] = frame_rate * 2
+					opts[:frame_rate] = frame_rate
+					opts[:keyframe_interval] = frame_rate * 2
 					
 					actions << VideoAction.new(video, opts.merge(@options))
 				end
