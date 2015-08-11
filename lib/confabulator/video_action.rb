@@ -24,18 +24,24 @@ module Confabulator
             end
 
             # Skip transcoding if there is a rough format and size match
-            if options[:fast] &&
-                options[:width] == video.width &&
-                options[:height] == video.height &&
-                ((options[:extension] == 'mp4' &&
-                    video.video_codec =~ /h264/i &&
-                    video.audio_codec =~ /aac/i) ||
-                (options[:extension] == 'webm' &&
-                    video.video_codec =~ /vp8|vp9/i &&
-                    video.audio_codec =~ /vorbis/i))
+            if options[:fast]
+                skip = true
+
+                if (options[:width] && options[:width] != video.width) ||
+                    (options[:height] && options[:height] != video.height)
+                    skip = false
+                else
+                    if options[:formats] && options[:formats].include?('mp4')
+                        skip = video.video_codec =~ /h264/i && video.audio_codec =~ /aac/i
+                    end
+
+                    if skip && options[:formats] && options[:formats].include?('webm')
+                        skip = video.video_codec =~ /h264/i && video.audio_codec =~ /aac/i
+                    end
+                end
 
                 @outputname = video.path
-                @skip_transcode = true
+                @skip_transcode = skip
                 return
             end
 
