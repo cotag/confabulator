@@ -223,7 +223,7 @@ module Confabulator
 		VIDEO_FORMATS = [
 			{
 				:video_codec => 'h264',  #'h264',
-				:audio_codec => 'aac',
+				#:audio_codec => 'aac', # Let ffmpeg pick this
 				:extension => 'mp4',
 				:custom => '-strict experimental -pix_fmt yuv420p',
 				:mime => 'video/mp4',
