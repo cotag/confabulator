@@ -184,7 +184,7 @@ module Confabulator
 
         def initialize(file, type, options = {})
             @filename = file
-            @options = options
+            @options = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(options)
             # Options:
             # * native_only: only have a single copy of the video
             # * formats: [array of whitelisted file extensions]
@@ -265,7 +265,7 @@ module Confabulator
                 
                 VIDEO_FORMATS.each do |format|
                     next if @options[:formats] && !@options[:formats].include?(format[:extension])
-                    opts = format.merge(res)
+                    opts = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(format.merge(res))
 
                     # Upgrade encoding to h265
 =begin
