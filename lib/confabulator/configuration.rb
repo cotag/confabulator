@@ -4,7 +4,6 @@ module Confabulator
     class Configuration
         PROFILE_HIGH = 'high'.freeze
 
-        
         W_16_10 = [
             {   # 8K
                 width: 7680,
@@ -71,6 +70,72 @@ module Confabulator
                 audio_bitrate: 128
             }]
 
+        W_10_16 = [
+            {   # 8K
+                width: 4800,
+                height: 7680,
+                video_bitrate: 7500,
+                audio_bitrate: 192
+            },
+            {   # 4K
+                width: 2400,
+                height: 3840,
+                video_bitrate: 4000,
+                audio_bitrate: 192
+            },
+            {
+                width: 1200,
+                height: 1920,
+                video_bitrate: 3500,
+                audio_bitrate: 192,
+                x264_vprofile: PROFILE_HIGH
+            },
+            {
+                width: 800,
+                height: 1280,
+                video_bitrate: 2000,
+                audio_bitrate: 128
+            },
+            {
+                width: 480,
+                height: 768,
+                video_bitrate: 850,
+                audio_bitrate: 128
+            }]
+
+        W_9_16 = [
+            {   # 8K
+                width: 4320,
+                height: 7680,
+                video_bitrate: 7000,
+                audio_bitrate: 192
+            },
+            {   # 4K
+                width: 2160,
+                height: 3840,
+                video_bitrate: 3500,
+                audio_bitrate: 192
+            },
+            {   # 1080p
+                width: 1080,
+                height: 1920,
+                video_bitrate: 3000,
+                audio_bitrate: 192,
+                x264_vprofile: PROFILE_HIGH
+            },
+            {   # 720p
+                width: 720,
+                height: 1280,
+                video_bitrate: 2000,
+                audio_bitrate: 128
+            },
+            {   # 480p
+                width: 480,
+                height: 854,
+                video_bitrate: 900,
+                audio_bitrate: 128
+            }]
+
         S_4_3 = [
             {
                 width: 6400,
@@ -108,6 +173,10 @@ module Confabulator
         S16_9  = 9.0 / 16.0
         S4_3   = 3.0 / 4.0     # / # -- Ruby code editors seem to struggle with division
 
+        # Portrait ratios
+        S10_16 = 16.0 / 10.0
+        S9_16  = 16.0 / 9.0
+
         def self.calculate_sizes(objWidth, objHeight)
             # Check for portrait videos vs the regular landscape
             portrait = objWidth < objHeight
@@ -115,8 +184,8 @@ module Confabulator
             if portrait
                 width = :height
                 height = :width
-                ratio = objWidth.to_f / objHeight.to_f
-                new_width = objHeight
+                ratio = objHeight.to_f / objWidth.to_f  # was flipped
+                new_width = objWidth # was height
             else
                 width = :width
                 height = :height
@@ -136,6 +205,10 @@ module Confabulator
             when S4_3
                 #resolutions = S_4_3.select {|x| x[width] <= video.width && x[height] <= video.height}
                 list = S_4_3
+            when S10_16
+                list = W_10_16
+            when S9_16
+                list = W_9_16
             end
 
             # Compile a list of resolutions we want to build
